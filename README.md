@@ -1,5 +1,7 @@
 # The Hytel Way: Monorepo Stack
 
+app link: https://logos-91c8e.web.app/
+
 A production-ready monorepo template featuring React, TypeScript, Tailwind CSS, Shadcn UI, tRPC, and TanStack Query. Built with pnpm and Turborepo for optimal developer experience.
 
 ## Stack Overview
