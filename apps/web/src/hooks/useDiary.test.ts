@@ -9,6 +9,11 @@ import {
   useDeleteDiaryEntry,
 } from './useDiary'
 
+// Prevent Firebase from initialising (no API key in CI)
+vi.mock('../providers/AuthProvider', () => ({
+  useAuth: vi.fn(() => ({ user: { uid: 'test-uid' } })),
+}))
+
 const mockEntries = [
   {
     id: 'entry-1',
