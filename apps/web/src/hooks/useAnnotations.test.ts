@@ -9,6 +9,11 @@ import {
   useDeleteAnnotation,
 } from './useAnnotations'
 
+// Prevent Firebase from initialising (no API key in CI)
+vi.mock('../providers/AuthProvider', () => ({
+  useAuth: vi.fn(() => ({ user: { uid: 'test-uid' } })),
+}))
+
 const mockAnnotations = [
   {
     usfm: 'JHN.3.16',

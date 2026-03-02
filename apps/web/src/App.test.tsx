@@ -1,11 +1,41 @@
 import { render, screen } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { App } from './App'
 
-// Mock firebase to avoid real API calls in tests
+// Mock firebase — export every symbol the app imports so no "missing export" errors
 vi.mock('./firebase', () => ({
+  app: {},
+  auth: {},
+  authReady: Promise.resolve(),
   chatCallable: vi.fn(),
   ingestCallable: vi.fn(),
+}))
+
+// Mock firebase/firestore so pages that call getFirestore(app) at module level don't throw
+vi.mock('firebase/firestore', () => ({
+  getFirestore: vi.fn(() => ({})),
+  doc: vi.fn(),
+  getDoc: vi.fn(() => Promise.resolve({ exists: () => false, data: () => ({}) })),
+  setDoc: vi.fn(() => Promise.resolve()),
+  serverTimestamp: vi.fn(() => null),
+  collection: vi.fn(),
+  query: vi.fn(),
+  where: vi.fn(),
+  getDocs: vi.fn(() => Promise.resolve({ docs: [] })),
+}))
+
+// Mock AuthProvider so tests don't need real Firebase Auth / Firestore
+vi.mock('./providers/AuthProvider', () => ({
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useAuth: vi.fn(() => ({
+    user: { uid: 'test-uid', displayName: 'Test User', email: 'test@test.com' },
+    userProfile: { uid: 'test-uid', onboardingComplete: true },
+    loading: false,
+    signInWithGoogle: vi.fn(),
+    signOut: vi.fn(),
+    setUserProfile: vi.fn(),
+    refreshUserProfile: vi.fn(),
+  })),
 }))
 
 // Mock tRPC so TodayPage/BiblePage/DiaryPage don't need a real provider
@@ -65,6 +95,13 @@ vi.mock('./lib/trpc', () => ({
 }))
 
 describe('App', () => {
+  beforeEach(() => {
+    // Start at /today so BottomNav is visible (not hidden by splash/auth paths)
+    window.history.pushState({}, '', '/today')
+    // Mark splash as already played so SplashGate skips the splash screen
+    sessionStorage.setItem('splashPlayed', 'true')
+  })
+
   it('renders the bottom navigation', () => {
     render(<App />)
     expect(screen.getByRole('navigation', { name: /bottom navigation/i })).toBeInTheDocument()

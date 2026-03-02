@@ -1,8 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { DailyPrayerCard } from './DailyPrayerCard'
 
 describe('DailyPrayerCard', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
   it('renders nothing when text is absent and not loading', () => {
     const { container } = render(<DailyPrayerCard />)
     expect(container.firstChild).toBeNull()
