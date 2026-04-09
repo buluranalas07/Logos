@@ -1,68 +1,91 @@
-# The Hytel Way: Monorepo Stack
+# Logos
 
-app link: https://logos-91c8e.web.app/
+**Live:** https://logos-91c8e.web.app/
 
-A production-ready monorepo template featuring React, TypeScript, Tailwind CSS, Shadcn UI, tRPC, and TanStack Query. Built with pnpm and Turborepo for optimal developer experience.
+Logos is an AI-powered Bible study and devotional web application. It combines scripture reading, daily devotionals, an AI conversational mentor, journaling, and a Retrieval-Augmented Generation (RAG) pipeline backed by a curated library of theological and philosophical source material.
 
-## Stack Overview
+---
 
-Think of building a web app like putting on a theater production!
+## Features
 
-| Tool               | Role            | Analogy                                        |
-| ------------------ | --------------- | ---------------------------------------------- |
-| **pnpm**           | Package Manager | The super-organized prop master                |
-| **Turborepo**      | Build System    | The stage manager coordinating tasks           |
-| **React + Vite**   | Frontend        | The stage and lighting system                  |
-| **TypeScript**     | Type Safety     | The script ensuring everyone knows their lines |
-| **Tailwind CSS**   | Styling         | The costume designer's fabric swatches         |
-| **Shadcn UI**      | Components      | Pre-made costume patterns                      |
-| **tRPC**           | API Layer       | The messenger between actors                   |
-| **TanStack Query** | Data Fetching   | Smart caching (remembers the script!)          |
-| **Vitest**         | Testing         | Dress rehearsals before the show               |
-| **Zod**            | Validation      | The bouncer checking IDs                       |
+- **Bible Reader** -- Full Bible reading experience powered by the YouVersion Platform API. Supports multiple translations (BSB, NIV, WEB), chapter-by-chapter navigation with cross-book boundaries, and a chapter picker with OT/NT grouping.
+- **Today Page** -- Daily verse of the day (curated rotation), AI-generated daily prayer via Gemini, and streak tracking.
+- **AI Mentor ("Peter")** -- Conversational AI grounded in logic and historical evidence. Uses a tiered RAG system to retrieve context from vectorized theological, philosophical, and historical sources before responding.
+- **Diary / Journal** -- Personal journaling with entry management backed by Firestore.
+- **Annotations** -- Highlight and annotate Bible passages.
+- **User Profiles** -- Firebase Authentication with onboarding flow and user profile management.
+- **RAG Pipeline** -- PDF ingestion, semantic chunking, Vertex AI embeddings, Firestore vector search (`findNearest`), semantic caching, and multi-model tiering (Gemini Flash / Pro).
 
-## Monorepo Structure
+---
+
+## Tech Stack
+
+| Layer            | Technology                                       |
+| ---------------- | ------------------------------------------------ |
+| Frontend         | React, Vite, TypeScript, Tailwind CSS            |
+| UI Components    | Shadcn UI, Framer Motion                         |
+| API Layer        | tRPC (end-to-end type safety)                    |
+| Data Fetching    | TanStack Query                                   |
+| Backend          | Firebase Cloud Functions (Node.js 22)            |
+| Database         | Firestore (NoSQL + native vector search)         |
+| AI / LLM         | Vertex AI (Gemini Flash, Gemini Pro)             |
+| Embeddings       | Vertex AI text-embedding-004                     |
+| Auth             | Firebase Authentication                          |
+| Hosting          | Firebase Hosting                                 |
+| Build System     | Turborepo, pnpm workspaces                       |
+| CI/CD            | GitHub Actions, Workload Identity Federation     |
+| Testing          | Vitest                                           |
+| Code Quality     | ESLint, Prettier, Husky, lint-staged, Changesets |
+
+---
+
+## Project Structure
 
 ```
-├── .github/
-│   ├── workflows/        # CI/CD pipelines (ready to use!)
-│   ├── CODEOWNERS        # Auto-assign reviewers
-│   └── ISSUE_TEMPLATE/   # Issue & PR templates
-│
+logos/
 ├── apps/
-│   ├── web/              # React frontend (Vite + Tailwind)
-│   │   ├── src/
-│   │   │   ├── App.tsx   # Main application component
-│   │   │   ├── hooks/    # Custom React hooks
-│   │   │   ├── lib/      # Utilities (tRPC client, query client)
-│   │   │   └── providers/# Context providers
-│   │   └── public/       # Static assets
+│   ├── web/                  # React frontend (Vite + Tailwind)
+│   │   └── src/
+│   │       ├── pages/        # TodayPage, BiblePage, DiaryPage, ProfilePage,
+│   │       │                 # Auth, Onboarding, LandingPage, Splash
+│   │       ├── components/   # Organized by feature: bible/, today/, diary/,
+│   │       │                 # profile/, layout/, atoms/
+│   │       ├── hooks/        # useBible, useDiary, useStreak, useAnnotations,
+│   │       │                 # useReadingProgress, useBibleSettings
+│   │       ├── lib/          # tRPC client, query client, AI modal context
+│   │       └── providers/    # AuthProvider, QueryProvider
 │   │
-│   └── functions/        # tRPC backend
-│       └── src/trpc/     # API routers and procedures
+│   └── functions/            # Firebase Cloud Functions (tRPC backend)
+│       └── src/
+│           ├── trpc/routers/ # bible, diary, annotations, user routers
+│           ├── rag.ts        # RAG pipeline (retrieval, context assembly)
+│           ├── gcsIngest.ts  # PDF ingestion from Cloud Storage
+│           ├── chunking.ts   # Semantic text chunking
+│           ├── embeddings.ts # Vertex AI embedding generation
+│           └── bookCatalog.ts# Source library metadata and catalog
 │
 ├── packages/
-│   ├── ui/               # Shared React components
-│   │   ├── components/
-│   │   │   ├── Header.tsx
-│   │   │   ├── Counter.tsx
-│   │   │   └── ui/       # Shadcn UI components (Button, Card)
-│   │   └── lib/utils.ts  # Tailwind class merging utility
-│   │
-│   ├── shared/           # Shared Zod schemas & types
-│   │   └── src/schemas/  # User schemas, validation rules
-│   │
-│   ├── eslint-config/    # Shared ESLint configuration
-│   └── typescript-config/# Shared TypeScript configuration
+│   ├── ui/                   # Shared React components (Header, Counter, Shadcn UI)
+│   ├── shared/               # Shared Zod schemas and TypeScript types
+│   ├── config/               # Shared project configuration
+│   ├── eslint-config/        # Shared ESLint rules
+│   └── typescript-config/    # Shared tsconfig base
 │
-├── docs/ci-cd/           # CI/CD documentation
-├── scripts/              # Setup scripts (WIF, etc.)
-├── turbo.json            # Turborepo pipeline configuration
-├── pnpm-workspace.yaml   # Workspace definition
-└── package.json          # Root scripts
+├── sources/                  # PDF source library for RAG (theology,
+│                             # philosophy, history -- organized by tier)
+├── docs/                     # Design docs, implementation notes, CI/CD guides
+├── scripts/                  # Infrastructure setup scripts (WIF)
+├── .github/workflows/        # CI, deploy-dev, deploy-stage, deploy-main,
+│                             # release, dependency-review
+├── firebase.json             # Hosting + Functions configuration
+├── firestore.rules           # Security rules
+├── turbo.json                # Turborepo pipeline config
+└── pnpm-workspace.yaml       # Workspace definition (apps/*, packages/*)
 ```
 
-## Quick Start
+---
+
+## Getting Started
 
 ### Prerequisites
 
@@ -72,22 +95,18 @@ Think of building a web app like putting on a theater production!
 ### Installation
 
 ```bash
-# Clone the repository
 git clone <your-repo-url>
-cd hytel-react-boilerplate
-
-# Install dependencies
+cd logos
 pnpm install
 ```
 
 ### Development
 
 ```bash
-# Start the development server
+# Start development servers
 pnpm dev
-# Opens at http://localhost:5173
 
-# Run all quality checks
+# Run all quality checks (lint, typecheck, build, test)
 pnpm precheck
 
 # Run tests
@@ -95,52 +114,13 @@ pnpm test
 
 # Build for production
 pnpm build
-
-# Lint code
-pnpm lint
-
-# Format code
-pnpm format
 ```
 
-## Key Features
+### Environment Variables
 
-### Shared Components (`packages/ui`)
+Copy `.env.example` to `.env` and fill in the required values. The backend requires a YouVersion API key (stored in Google Secret Manager) and Vertex AI credentials.
 
-Components in `@repo/ui` can be used by any app in the monorepo:
-
-```tsx
-import { Header } from '@repo/ui/Header'
-import { Button } from '@repo/ui/Button'
-import { Card, CardHeader, CardContent } from '@repo/ui/Card'
-```
-
-### Type-Safe API (`apps/functions`)
-
-tRPC provides end-to-end type safety:
-
-```tsx
-// Backend (apps/functions)
-export const userRouter = router({
-  create: publicProcedure
-    .input(CreateUserSchema)
-    .mutation(({ input }) => ({ id: 'new-id', ...input })),
-})
-
-// Frontend (apps/web)
-const { mutate } = trpc.user.create.useMutation()
-```
-
-### Shared Schemas (`packages/shared`)
-
-Zod schemas shared between frontend and backend:
-
-```tsx
-import { UserSchema, CreateUserSchema } from '@repo/shared'
-
-// Type-safe validation everywhere!
-const user = UserSchema.parse(data)
-```
+---
 
 ## Scripts Reference
 
@@ -164,155 +144,21 @@ const user = UserSchema.parse(data)
 
 ## CI/CD Pipeline
 
-This template includes a **fully configured CI/CD pipeline** using GitHub Actions and Workload Identity Federation (WIF) for secure deployments.
+Deployments use GitHub Actions with Workload Identity Federation for keyless GCP authentication.
 
-### Branch Strategy
-
-| Branch  | Environment | Deployment                 |
-| ------- | ----------- | -------------------------- |
-| `dev`   | Development | Auto on push               |
-| `stage` | Staging     | Auto on push               |
-| `main`  | Production  | Manual (with confirmation) |
-
-### GitHub Actions Workflows
-
-| Workflow                | Trigger         | Purpose                              |
-| ----------------------- | --------------- | ------------------------------------ |
-| `ci.yml`                | PR & push       | Lint, typecheck, build, test         |
-| `deploy-dev.yml`        | Push to `dev`   | Deploy to development                |
-| `deploy-stage.yml`      | Push to `stage` | Deploy to staging                    |
-| `deploy-main.yml`       | Manual          | Deploy to production                 |
-| `release.yml`           | Push to `main`  | Automated versioning with Changesets |
-| `dependency-review.yml` | PR              | Check for vulnerable dependencies    |
-
-### Workload Identity Federation (WIF)
-
-All deployments use **keyless authentication** with GCP:
-
-- No stored service account keys
-- Short-lived tokens (expire in ~1 hour)
-- Full audit trail in GCP
-
-### Required GitHub Secrets
-
-Configure these in your repository settings:
-
-| Secret                           | Description           |
-| -------------------------------- | --------------------- |
-| `GCP_WORKLOAD_IDENTITY_PROVIDER` | WIF provider path     |
-| `GCP_SA_EMAIL`                   | Service account email |
-
-### Setup Instructions
-
-1. **Configure WIF** using `scripts/setup-wif.sh`
-2. **Add secrets** to GitHub repository settings
-3. **Create environments** (`dev`, `stage`, `main`) in GitHub settings
-4. **Push to branches** to trigger deployments
+| Branch  | Environment | Deployment    |
+| ------- | ----------- | ------------- |
+| `dev`   | Development | Auto on push  |
+| `stage` | Staging     | Auto on push  |
+| `main`  | Production  | Manual trigger|
 
 See [docs/ci-cd/CI-CD-Pipeline-Guide.md](docs/ci-cd/CI-CD-Pipeline-Guide.md) for detailed setup instructions.
 
 ---
 
-## Development Tools
+## Boilerplate
 
-### Git Hooks (Husky)
-
-Pre-commit hooks automatically run:
-
-- ESLint on staged `.ts`/`.tsx` files
-- Prettier on staged files
-
-### Changesets
-
-Semantic versioning for the monorepo:
-
-```bash
-# Create a changeset when you make changes
-pnpm changeset
-
-# The release workflow handles version bumps automatically
-```
-
-### Syncpack
-
-Dependency consistency across packages:
-
-```bash
-pnpm sync:lint   # Check for mismatches
-pnpm sync:fix    # Auto-fix mismatches
-pnpm sync:list   # List all versions
-```
-
----
-
-## Testing
-
-Each package has its own tests:
-
-```bash
-# Run all tests
-pnpm test
-
-# Run tests for specific package
-pnpm --filter web test
-pnpm --filter @repo/ui test
-pnpm --filter @repo/shared test
-pnpm --filter @repo/functions test
-
-# Run with coverage
-pnpm test:coverage
-```
-
----
-
-## Adding New Packages
-
-### New App
-
-```bash
-mkdir apps/new-app
-cd apps/new-app
-pnpm init
-```
-
-### New Shared Package
-
-```bash
-mkdir packages/new-package
-cd packages/new-package
-pnpm init
-```
-
-Packages are auto-discovered via `pnpm-workspace.yaml` (configured for `apps/*` and `packages/*`).
-
----
-
-## Version Requirements
-
-| Tool         | Minimum Version        |
-| ------------ | ---------------------- |
-| Node.js      | 20.x                   |
-| pnpm         | 8.x                    |
-| Turbo        | 2.x                    |
-| TypeScript   | 5.x                    |
-| Vitest       | 2.x                    |
-| ESLint       | 8.x                    |
-| Prettier     | 3.x                    |
-| Firebase CLI | 13.x (for deployment)  |
-| gcloud CLI   | Latest (for WIF setup) |
-
----
-
-## Useful Links
-
-- [Turborepo Documentation](https://turbo.build/repo/docs)
-- [Shadcn UI Components](https://ui.shadcn.com)
-- [tRPC Documentation](https://trpc.io)
-- [TanStack Query](https://tanstack.com/query)
-- [Tailwind CSS](https://tailwindcss.com)
-- [Vite](https://vitejs.dev)
-- [Changesets](https://github.com/changesets/changesets)
-- [Workload Identity Federation](https://cloud.google.com/iam/docs/workload-identity-federation)
+The monorepo scaffolding and infrastructure for this project is provided by **Hytel**. The original boilerplate includes the Turborepo workspace configuration, shared packages structure, CI/CD pipelines, ESLint/Prettier/Husky tooling, and the tRPC + React starter wiring.
 
 ---
 
@@ -322,4 +168,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow and guidelines.
 
 ---
 
-Built with ❤️ using Turborepo
+## License
+
+This project is private.
